@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { mockJobs } from "@/lib/mock-jobs";
 import { jobCache } from "@/app/api/jobs/route";
+import { getJobByIdFromDb } from "@/server/jobs-store";
 
 interface Context {
   params: Promise<{ id: string }>;
@@ -9,8 +10,11 @@ interface Context {
 export async function GET(_: Request, context: Context) {
   const { id } = await context.params;
 
-  // Check live cache first, then fall back to mock
-  const job = jobCache.get(id) ?? mockJobs.find((item) => item.id === id);
+  // DB first for persistence, then process cache, then mock fallback
+  const job =
+    (await getJobByIdFromDb(id)) ??
+    jobCache.get(id) ??
+    mockJobs.find((item) => item.id === id);
 
   if (!job) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });

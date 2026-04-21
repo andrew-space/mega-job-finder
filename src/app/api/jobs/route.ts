@@ -3,6 +3,7 @@ import { fetchJobsFromFranceTravail } from "@/server/collectors/france-travail";
 import { markDuplicates } from "@/lib/dedup";
 import type { JobOffer, ContractType } from "@/lib/job-types";
 import { mockJobs } from "@/lib/mock-jobs";
+import { getJobsFromDb, upsertJobs } from "@/server/jobs-store";
 
 // Module-level cache so /api/jobs/[id] can serve live offers fetched here
 export const jobCache = new Map<string, JobOffer>();
@@ -17,29 +18,46 @@ export async function GET(request: Request) {
     | undefined;
 
   let offers: JobOffer[] = [];
-  let mode: "mock" | "live" | "mixed" = "mock";
+  let mode: "mock" | "live-db" | "live-fallback-mock" = "mock";
 
   if (live) {
     try {
-      offers = await fetchJobsFromFranceTravail(
+      const liveOffers = await fetchJobsFromFranceTravail(
         { q, city, contractTypes: contractType ? [contractType] : undefined },
         { maxResults: 50 }
       );
+
       // Populate cache for detail page lookups
-      offers.forEach((job) => jobCache.set(job.id, job));
-      mode = "live";
+      liveOffers.forEach((job) => jobCache.set(job.id, job));
+
+      // Persist live offers to DB and serve from DB for stable behavior across restarts
+      await upsertJobs(liveOffers);
+      offers = await getJobsFromDb({ q, city, contractType, limit: 50 });
+      mode = "live-db";
     } catch (err) {
-      console.error("France Travail fetch failed, falling back to mock:", err);
-      offers = [...mockJobs];
-      mode = "mock";
+      console.error("Live flow failed, trying DB first then mock fallback:", err);
+
+      try {
+        offers = await getJobsFromDb({ q, city, contractType, limit: 50 });
+        if (offers.length > 0) {
+          mode = "live-db";
+        } else {
+          offers = [...mockJobs];
+          mode = "live-fallback-mock";
+        }
+      } catch (dbErr) {
+        console.error("DB query failed, falling back to mock:", dbErr);
+        offers = [...mockJobs];
+        mode = "live-fallback-mock";
+      }
     }
   } else {
     offers = [...mockJobs];
     mode = "mock";
   }
 
-  // Client-side filter for mock mode
-  if (mode === "mock") {
+  // Client-side filter for mock modes
+  if (mode === "mock" || mode === "live-fallback-mock") {
     const qLow = q?.toLowerCase();
     const cityLow = city?.toLowerCase();
     offers = offers.filter((job) => {
