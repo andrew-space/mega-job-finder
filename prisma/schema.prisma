@@ -1,0 +1,41 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model JobOffer {
+  id              String    @id @default(cuid())
+  sourceId        String    // "207GMWL" (France Travail ID)
+  source          String    // "france_travail" | "apec" | etc
+  title           String
+  company         String
+  city            String
+  department      String    // "75"
+  region          String    // "Île-de-France"
+  latitude        Float?
+  longitude       Float?
+  contractType    String    // CDI | CDD | Stage | Alternance | Freelance
+  remoteType      String    // none | partial | full
+  salaryMin       Int?
+  salaryMax       Int?
+  salaryCurrency  String    @default("EUR") // "EUR"
+  experienceLevel String?   // junior | mid | senior
+  description     String    @db.Text
+  skills          Json?     // ["JavaScript", "React"]
+  publishedAt     DateTime
+  applyUrl        String
+  sourcePayload   Json?     // Raw API response
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([sourceId, source])
+  @@index([city, department])
+  @@index([publishedAt])
+}

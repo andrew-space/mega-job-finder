@@ -1,44 +1,58 @@
 import { NextResponse } from "next/server";
-import { franceTravailCollector } from "@/collectors/france-travail";
+import { fetchJobsFromFranceTravail } from "@/server/collectors/france-travail";
 import { markDuplicates } from "@/lib/dedup";
-import type { JobOffer } from "@/lib/job-types";
+import type { JobOffer, ContractType } from "@/lib/job-types";
 import { mockJobs } from "@/lib/mock-jobs";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const q = searchParams.get("q")?.toLowerCase().trim();
-  const city = searchParams.get("city")?.toLowerCase().trim();
-  const wantsLive = searchParams.get("live") === "1";
+  const q = searchParams.get("q")?.trim() || undefined;
+  const city = searchParams.get("city")?.trim() || undefined;
+  const live = searchParams.get("live") === "1";
+  const contractType = (searchParams.get("contractType")?.trim() || undefined) as
+    | ContractType
+    | undefined;
 
-  let offers: JobOffer[] = [...mockJobs];
-  let mode: "mock" | "mixed" | "live" = "mock";
+  let offers: JobOffer[] = [];
+  let mode: "mock" | "live" | "mixed" = "mock";
 
-  if (wantsLive) {
+  if (live) {
     try {
-      const raw = await franceTravailCollector.fetchOffers({ q, city });
-      const normalized = raw.map((item) => franceTravailCollector.normalizeOffer(item));
-      if (normalized.length > 0) {
-        offers = normalized;
-        mode = "live";
-      }
-    } catch {
+      offers = await fetchJobsFromFranceTravail(
+        { q, city, contractTypes: contractType ? [contractType] : undefined },
+        { maxResults: 50 }
+      );
+      mode = "live";
+    } catch (err) {
+      console.error("France Travail fetch failed, falling back to mock:", err);
+      offers = [...mockJobs];
       mode = "mock";
     }
+  } else {
+    offers = [...mockJobs];
+    mode = "mock";
   }
 
-  const deduped = markDuplicates(offers);
-  const filtered = deduped.filter((job) => {
-    const text = `${job.title} ${job.company} ${job.description}`.toLowerCase();
-    const qMatch = !q || text.includes(q);
-    const cityMatch = !city || job.location.city.toLowerCase().includes(city);
-    return qMatch && cityMatch;
-  });
+  // Client-side filter for mock mode
+  if (mode === "mock") {
+    const qLow = q?.toLowerCase();
+    const cityLow = city?.toLowerCase();
+    offers = offers.filter((job) => {
+      const text = `${job.title} ${job.company} ${job.description}`.toLowerCase();
+      if (qLow && !text.includes(qLow)) return false;
+      if (cityLow && !job.location.city.toLowerCase().includes(cityLow)) return false;
+      if (contractType && job.contractType !== contractType) return false;
+      return true;
+    });
+  }
+
+  const deduped = markDuplicates(offers).filter((j) => !j.isDuplicate);
 
   return NextResponse.json({
-    data: filtered,
+    data: deduped,
     meta: {
-      total: filtered.length,
-      sourceCoverage: [...new Set(filtered.map((item) => item.source))],
+      total: deduped.length,
+      sourceCoverage: [...new Set(deduped.map((j) => j.source))],
       mode,
     },
   });
