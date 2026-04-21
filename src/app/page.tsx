@@ -6,12 +6,20 @@ export default function Home() {
       {/* Nav */}
       <nav className="flex h-14 items-center justify-between border-b border-slate-100 px-6">
         <span className="text-sm font-bold text-slate-900">JobRadar</span>
-        <Link
-          href="/search"
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 transition-colors"
-        >
-          Rechercher
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/profile"
+            className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            Profil
+          </Link>
+          <Link
+            href="/search"
+            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 transition-colors"
+          >
+            Rechercher
+          </Link>
+        </div>
       </nav>
 
       {/* Hero */}
@@ -26,12 +34,18 @@ export default function Home() {
           Visualisez les offres autour de vous. Filtrez, comparez, postulez —
           sans surcharge d&apos;information.
         </p>
-        <div className="mt-8">
+        <div className="mt-8 flex items-center justify-center gap-3">
           <Link
             href="/search"
             className="inline-block rounded-md bg-slate-900 px-8 py-3 text-sm font-semibold text-white hover:bg-slate-700 transition-colors"
           >
             Explorer les offres
+          </Link>
+          <Link
+            href="/profile"
+            className="inline-block rounded-md border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            Préparer mon profil
           </Link>
         </div>
         <p className="mt-4 text-xs text-slate-400">
