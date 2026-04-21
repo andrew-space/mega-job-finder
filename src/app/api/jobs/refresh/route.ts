@@ -54,10 +54,30 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Refresh pipeline failed:", error);
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+    const looksLikeMissingDbUrl = message.includes("Environment variable not found: DATABASE_URL");
+    const looksLikeTableMissing = message.includes("relation") && message.includes("does not exist");
+
+    const debug = {
+      type: error instanceof Error ? error.name : "UnknownError",
+      code: looksLikeMissingDbUrl
+        ? "DB_ENV_MISSING"
+        : looksLikeTableMissing
+        ? "DB_SCHEMA_MISSING"
+        : "REFRESH_FAILED",
+      hint: looksLikeMissingDbUrl
+        ? "DATABASE_URL not visible at runtime in this deployment"
+        : looksLikeTableMissing
+        ? "Prisma schema not applied in target database"
+        : "Check server logs for collector or database errors",
+    };
+
     return NextResponse.json(
       {
         ok: false,
         error: "Refresh failed",
+        debug,
       },
       { status: 500 }
     );
