@@ -147,8 +147,8 @@ export const franceTravailCollector: Collector = {
     const accessToken = await getAccessToken();
     const params = new URLSearchParams();
 
-    if (query.q) params.set("motsCles", query.q);
-    if (query.city) params.set("commune", query.city);
+    const freeText = [query.q, query.city].filter(Boolean).join(" ").trim();
+    if (freeText) params.set("motsCles", freeText);
     params.set("range", "0-24");
 
     const response = await fetch(`${SEARCH_URL}?${params.toString()}`, {
