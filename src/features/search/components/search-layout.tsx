@@ -69,7 +69,7 @@ export function SearchLayout() {
           {/* Logo */}
           <Link
             href="/"
-            className="shrink-0 text-sm font-bold tracking-tight text-blue-700"
+            className="shrink-0 text-sm font-bold tracking-tight text-slate-900"
           >
             JobRadar
           </Link>
@@ -200,19 +200,19 @@ export function SearchLayout() {
         {/* Job List */}
         <div
           ref={listRef}
-          className="w-full overflow-y-auto border-r border-slate-200 bg-white p-4 md:w-[400px] lg:w-[440px]"
+          className="w-full overflow-y-auto border-r border-slate-200 bg-white md:w-[400px] lg:w-[440px]"
         >
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-px">
               {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
-                  className="h-32 animate-pulse rounded-xl bg-slate-100"
+                  className="h-[88px] animate-pulse bg-slate-100"
                 />
               ))}
             </div>
           ) : error ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <div className="mx-4 mt-4 border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               <p className="font-medium">Impossible de charger les offres.</p>
               <p className="mt-1 text-xs opacity-75">
                 Vérifiez votre connexion ou basculez en mode Mock.
@@ -220,7 +220,6 @@ export function SearchLayout() {
             </div>
           ) : jobs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="mb-3 text-3xl">🔍</div>
               <p className="text-sm font-medium text-slate-700">
                 Aucune offre trouvée
               </p>
@@ -229,7 +228,7 @@ export function SearchLayout() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div>
               {jobs.map((job) => (
                 <div key={job.id} data-job-id={job.id}>
                   <JobCard
@@ -246,7 +245,7 @@ export function SearchLayout() {
         </div>
 
         {/* Map */}
-        <div className="hidden flex-1 md:block">
+        <div className="hidden flex-1 md:flex md:flex-col">
           <MapView
             jobs={jobs}
             selectedJobId={selectedJobId}

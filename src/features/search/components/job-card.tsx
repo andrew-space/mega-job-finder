@@ -3,32 +3,22 @@
 import type { JobOffer } from "@/lib/job-types";
 import { clsx } from "clsx";
 
-const CONTRACT_BADGE: Record<string, string> = {
-  CDI: "bg-emerald-100 text-emerald-800",
-  CDD: "bg-amber-100 text-amber-800",
-  Alternance: "bg-blue-100 text-blue-800",
-  Stage: "bg-violet-100 text-violet-800",
-  Freelance: "bg-orange-100 text-orange-800",
-  Interim: "bg-slate-100 text-slate-600",
-};
-
-const CONTRACT_BORDER: Record<string, string> = {
-  CDI: "border-l-emerald-500",
-  CDD: "border-l-amber-500",
-  Alternance: "border-l-blue-500",
-  Stage: "border-l-violet-500",
-  Freelance: "border-l-orange-500",
-  Interim: "border-l-slate-400",
+const CONTRACT_COLOR: Record<string, { dot: string; text: string }> = {
+  CDI:        { dot: "bg-emerald-500", text: "text-emerald-700" },
+  CDD:        { dot: "bg-amber-500",   text: "text-amber-700" },
+  Alternance: { dot: "bg-blue-500",    text: "text-blue-700" },
+  Stage:      { dot: "bg-violet-500",  text: "text-violet-700" },
+  Freelance:  { dot: "bg-orange-500",  text: "text-orange-700" },
+  Interim:    { dot: "bg-slate-400",   text: "text-slate-500" },
 };
 
 function formatSalary(salary: JobOffer["salary"]): string | null {
   if (!salary) return null;
-  const fmt = (n: number) =>
-    n >= 1000 ? `${Math.round(n / 1000)}k` : `${n}`;
-  const { min, max, currency, period } = salary;
+  const fmt = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k€` : `${n}€`);
+  const { min, max, period } = salary;
   const label = period === "month" ? "/mois" : "/an";
-  if (min && max) return `${fmt(min)} – ${fmt(max)} ${currency}${label}`;
-  if (min) return `${fmt(min)}+ ${currency}${label}`;
+  if (min && max) return `${fmt(min)} – ${fmt(max)}${label}`;
+  if (min) return `dès ${fmt(min)}${label}`;
   return null;
 }
 
@@ -37,9 +27,9 @@ function timeAgo(dateStr: string): string {
   const days = Math.floor(diff / 86_400_000);
   if (days === 0) return "Aujourd'hui";
   if (days === 1) return "Hier";
-  if (days < 7) return `Il y a ${days}j`;
-  if (days < 30) return `Il y a ${Math.floor(days / 7)}sem`;
-  return `Il y a ${Math.floor(days / 30)}mois`;
+  if (days < 7) return `${days}j`;
+  if (days < 30) return `${Math.floor(days / 7)}sem`;
+  return `${Math.floor(days / 30)}mois`;
 }
 
 interface JobCardProps {
@@ -50,16 +40,9 @@ interface JobCardProps {
   onClick?: () => void;
 }
 
-export function JobCard({
-  job,
-  isActive,
-  onMouseEnter,
-  onMouseLeave,
-  onClick,
-}: JobCardProps) {
+export function JobCard({ job, isActive, onMouseEnter, onMouseLeave, onClick }: JobCardProps) {
   const salary = formatSalary(job.salary);
-  const badgeClass = CONTRACT_BADGE[job.contractType] ?? "bg-slate-100 text-slate-600";
-  const borderClass = CONTRACT_BORDER[job.contractType] ?? "border-l-slate-400";
+  const colors = CONTRACT_COLOR[job.contractType] ?? { dot: "bg-slate-400", text: "text-slate-500" };
 
   return (
     <article
@@ -67,83 +50,63 @@ export function JobCard({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={clsx(
-        "group relative cursor-pointer rounded-xl border border-l-4 bg-white p-4",
-        "transition-all duration-150 hover:shadow-md hover:border-r-slate-300 hover:border-t-slate-300 hover:border-b-slate-300",
-        borderClass,
-        isActive
-          ? "shadow-md border-r-slate-300 border-t-slate-300 border-b-slate-300 ring-2 ring-blue-500/20"
-          : "border-r-slate-200 border-t-slate-200 border-b-slate-200"
+        "group cursor-pointer border-b border-slate-100 bg-white px-4 py-3.5 transition-colors",
+        isActive ? "bg-blue-50/60" : "hover:bg-slate-50"
       )}
     >
-      {/* Header */}
-      <div className="mb-1.5 flex items-start justify-between gap-3">
-        <h3 className="min-w-0 flex-1 text-sm font-semibold leading-snug text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-2">
+      {/* Title + date */}
+      <div className="mb-0.5 flex items-start justify-between gap-2">
+        <h3 className={clsx(
+          "flex-1 text-[13px] font-semibold leading-snug line-clamp-2",
+          isActive ? "text-blue-800" : "text-slate-900 group-hover:text-blue-700"
+        )}>
           {job.title}
         </h3>
-        <span className="shrink-0 text-xs text-slate-400 mt-0.5">
-          {timeAgo(job.publishedAt)}
-        </span>
+        <span className="shrink-0 text-[11px] text-slate-400 mt-0.5">{timeAgo(job.publishedAt)}</span>
       </div>
 
       {/* Company */}
-      <p className="mb-2.5 text-xs font-medium text-slate-500">{job.company}</p>
+      <p className="mb-2 text-[12px] text-slate-500">{job.company}</p>
 
-      {/* Location */}
-      <div className="mb-3 flex items-center gap-1 text-xs text-slate-500">
-        <svg
-          className="h-3.5 w-3.5 shrink-0 text-slate-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-        </svg>
-        <span>{job.location.city}</span>
-        {job.remote !== "none" && (
-          <>
-            <span className="text-slate-300">·</span>
-            <span className="text-blue-600 font-medium">
-              {job.remote === "full" ? "Full remote" : "Hybride"}
-            </span>
-          </>
-        )}
-      </div>
-
-      {/* Tags */}
-      <div className="flex flex-wrap gap-1.5">
-        <span
-          className={clsx(
-            "rounded-full px-2 py-0.5 text-xs font-medium",
-            badgeClass
-          )}
-        >
+      {/* Meta row */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        {/* Contract badge */}
+        <span className={clsx("flex items-center gap-1 text-[11px] font-semibold", colors.text)}>
+          <span className={clsx("h-1.5 w-1.5 rounded-full", colors.dot)} />
           {job.contractType}
         </span>
-        {salary && (
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-            {salary}
+
+        {/* Location */}
+        <span className="text-[11px] text-slate-400">{job.location.city}</span>
+
+        {/* Remote */}
+        {job.remote !== "none" && (
+          <span className="text-[11px] font-medium text-blue-600">
+            {job.remote === "full" ? "Remote" : "Hybride"}
           </span>
         )}
-        {job.skills.slice(0, 2).map((skill) => (
-          <span
-            key={skill}
-            className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-500"
-          >
-            {skill}
-          </span>
-        ))}
+
+        {/* Salary */}
+        {salary && (
+          <span className="text-[11px] font-medium text-slate-700">{salary}</span>
+        )}
       </div>
+
+      {/* Skills */}
+      {job.skills.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {job.skills.slice(0, 3).map((skill) => (
+            <span
+              key={skill}
+              className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+      )}
     </article>
   );
 }
+
+
