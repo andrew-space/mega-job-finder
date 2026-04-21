@@ -1,8 +1,7 @@
 import { prisma } from "@/server/db";
 import { fetchJobsFromFranceTravail } from "@/server/collectors/france-travail";
-import { fetchJobsFromApec } from "@/server/collectors/apec";
 import { upsertJobs } from "@/server/jobs-store";
-import type { ContractType, JobOffer } from "@/lib/job-types";
+import type { ContractType } from "@/lib/job-types";
 
 const FT_TIMEOUT_MS = 20000;
 
@@ -95,21 +94,10 @@ export async function runRefresh(payload: RefreshPayload): Promise<RefreshResult
   const contractTypes = payload.contractType ? [payload.contractType] : undefined;
   const maxResults = parseMaxResults(payload.maxResults);
 
-  const [ftResult, apecResult] = await Promise.allSettled([
-    withTimeout(
-      fetchJobsFromFranceTravail({ q, city, contractTypes }, { maxResults }),
-      FT_TIMEOUT_MS
-    ),
-    withTimeout(
-      fetchJobsFromApec({ q, city, contractTypes }, { maxResults }),
-      FT_TIMEOUT_MS
-    ),
-  ]);
-
-  const liveOffers: JobOffer[] = [
-    ...(ftResult.status === "fulfilled" ? ftResult.value : []),
-    ...(apecResult.status === "fulfilled" ? apecResult.value : []),
-  ];
+  const liveOffers = await withTimeout(
+    fetchJobsFromFranceTravail({ q, city, contractTypes }, { maxResults }),
+    FT_TIMEOUT_MS
+  );
 
   const { inserted, updated } = await upsertJobs(liveOffers);
 

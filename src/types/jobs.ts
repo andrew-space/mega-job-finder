@@ -3,7 +3,6 @@
 
 export type JobSource = 
   | 'france_travail'
-  | 'apec'
   | 'linkedin'
   | 'indeed'
   | 'wttj'

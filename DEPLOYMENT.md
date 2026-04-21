@@ -41,7 +41,6 @@ Optionnelles:
 - `DATABASE_URL_UNPOOLED`
 - `NEXT_PUBLIC_MAPBOX_TOKEN`
 - `RESEND_API_KEY`
-- `APEC_API_KEY` (active le collector APEC Stage 6)
 - `ADMIN_OPS_TOKEN` (requis pour le dashboard `/ops` et `/api/ops/refresh`)
 
 ## 5) Cas Neon / Prisma
@@ -113,12 +112,12 @@ Exemple de vérification API sécurisée:
 curl -H "x-ops-token: <ADMIN_OPS_TOKEN>" https://web-xi-plum-29.vercel.app/api/ops/refresh
 ```
 
-## 11) Insights live profil + APEC (Stage 5/6)
+## 11) Insights live profil + pipeline sources (Stage 5+)
 
 - `/profile` est force en rendu dynamique pour afficher des insights live depuis Prisma.
 - Si la DB est indisponible, la page repliquera automatiquement sur le mock.
-- Le refresh appelle FT + APEC en parallele avec isolation des erreurs (`Promise.allSettled`).
-- Sans `APEC_API_KEY`, APEC est ignore proprement et FT continue seul.
+- Le refresh API de production reste centre sur France Travail pour l'MVP.
+- L'architecture d'ingestion prepare l'ajout progressif de Greenhouse, Lever et sources custom.
 
 Validation rapide apres deploy:
 

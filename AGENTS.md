@@ -17,7 +17,8 @@ This AGENTS file applies to `JobRadar/web` only.
 - Stage 3: Vercel cron + refresh GET support + profile market insights done and deployed.
 - Stage 4: `/ops` dashboard + token-secured `/api/ops/refresh` done and deployed.
 - Stage 5: profile insights switched to live Prisma data with mock fallback done and deployed.
-- Stage 6: APEC collector added, parallelized with France Travail in refresh flow (fallback-safe) done and deployed.
+- Stage 6 (superseded): APEC spike retired from product strategy.
+- New strategy: France Travail primary, company career pages secondary, ATS connectors starting with Greenhouse + Lever.
 
 Production URL:
 - `https://web-xi-plum-29.vercel.app`
@@ -39,9 +40,15 @@ Production URL:
 - Core module: `src/server/refresh-jobs.ts`
 - Collectors:
 	- `src/server/collectors/france-travail.ts`
-	- `src/server/collectors/apec.ts`
+- New modular ingestion architecture:
+	- `src/lib/sources/detect-source.ts`
+	- `src/lib/collectors/francetravail.ts`
+	- `src/lib/collectors/greenhouse.ts`
+	- `src/lib/collectors/lever.ts`
+	- `src/lib/collectors/custom.ts`
+	- `src/lib/sync/sync-company-source.ts`
 - Persistence: `src/server/jobs-store.ts`
-- Strategy: collectors run in parallel with `Promise.allSettled`, so one source failing does not block the other.
+- Strategy: production refresh API currently uses France Travail only; Greenhouse/Lever are isolated collectors ready for company-source sync.
 
 ## Environment Variables
 
@@ -53,7 +60,6 @@ Required for France Travail:
 - `FRANCE_TRAVAIL_CLIENT_SECRET`
 
 Optional / conditional:
-- `APEC_API_KEY` (enables APEC collector; without it, APEC is skipped)
 - `ADMIN_OPS_TOKEN` (required for `/api/ops/refresh` and manual refresh from `/ops`)
 
 Reference:
@@ -86,11 +92,11 @@ npx.cmd vercel --prod --yes
 
 - Keep `/profile` dynamic (`force-dynamic`) so insights stay live.
 - Keep `/api/ops/refresh` token protection intact.
-- Keep refresh fallback-safe: no single collector should block refresh completion.
+- Keep ingestion modular: one source connector must not leak assumptions into another.
 - Avoid removing smoke-test/CI hardening logic.
 
 ## Next Recommended Stages
 
 - Add refresh history persistence for `/ops` (last runs timeline).
-- Add per-source stats in ops status (FT fetched, APEC fetched, inserted, updated).
+- Add per-source stats in ops status (FT fetched, Greenhouse fetched, Lever fetched, inserted, updated).
 - Add lightweight alerting on refresh failures.

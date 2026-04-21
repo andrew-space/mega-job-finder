@@ -10,10 +10,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum CompanySourceType {
+  greenhouse
+  lever
+  custom
+}
+
 model JobOffer {
   id              String    @id @default(cuid())
   sourceId        String    // "207GMWL" (France Travail ID)
-  source          String    // "france_travail" | "apec" | etc
+  source          String    // "france_travail" | "greenhouse" | "lever" | "custom" | etc
   title           String
   company         String
   city            String
@@ -38,4 +44,20 @@ model JobOffer {
   @@unique([sourceId, source])
   @@index([city, department])
   @@index([publishedAt])
+}
+
+model CompanySource {
+  id               String            @id @default(cuid())
+  companyName      String
+  careersUrl       String
+  sourceType       CompanySourceType
+  sourceIdentifier String
+  isActive         Boolean           @default(true)
+  lastSyncedAt     DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([sourceType, sourceIdentifier])
+  @@index([isActive])
+  @@index([companyName])
 }

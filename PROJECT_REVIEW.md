@@ -16,7 +16,7 @@
 
 ## Ajustement recommande pour la demo GitHub
 
-- Phase Demo V1: sources officielles uniquement (France Travail + APEC) + 1 source mock.
+- Phase Demo V1: France Travail officiel + architecture ATS modulaire (Greenhouse/Lever) + 1 source mock.
 - Dedup v1: ton algo score 80 applique sur pipeline normalise.
 - UI v1: split-view liste/carte, filtres essentiels, fiche offre simple.
 - Deploy v1: Vercel preview + repo GitHub public avec README clair.
@@ -27,7 +27,7 @@
 2. API jobs (recherche + detail).
 3. UI split-view avec interactions list/map.
 4. Connecteur France Travail officiel.
-5. Connecteur APEC officiel.
+5. Connecteurs Greenhouse + Lever + registry de sources entreprise.
 6. Caching, observabilite, puis alertes.
 
 ## Decisions prises dans ce setup initial

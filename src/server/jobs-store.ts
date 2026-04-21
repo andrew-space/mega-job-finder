@@ -15,7 +15,6 @@ const ALLOWED_SOURCES: JobSource[] = [
   "hellowork",
   "france_travail",
   "cadremploi",
-  "apec",
   "leboncoin",
 ];
 

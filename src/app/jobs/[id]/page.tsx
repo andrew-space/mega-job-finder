@@ -64,7 +64,6 @@ const SOURCE_LABEL: Record<string, string> = {
   wttj: "Welcome to the Jungle",
   hellowork: "HelloWork",
   cadremploi: "Cadremploi",
-  apec: "APEC",
   leboncoin: "Leboncoin",
 };
 

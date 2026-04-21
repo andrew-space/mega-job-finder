@@ -5,7 +5,6 @@ export type JobSource =
   | "hellowork"
   | "france_travail"
   | "cadremploi"
-  | "apec"
   | "leboncoin";
 
 export type ContractType =

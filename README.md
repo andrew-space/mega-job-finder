@@ -32,6 +32,7 @@ Dupliquer .env.example vers .env.local et renseigner les cles.
 
 ## Notes produit
 
-- Prioriser France Travail + APEC pour rester conforme et stable.
-- Ajouter les collecteurs scraping ensuite avec garde-fous (rate-limit, robots, retries).
+- Prioriser France Travail comme source API officielle MVP.
+- Ajouter progressivement Greenhouse + Lever + sources custom d'entreprises dans une architecture modulaire.
+- Ne pas lancer de scraping heavy (LinkedIn, Indeed, HelloWork) a ce stade.
 - Voir PROJECT_REVIEW.md pour la critique et les ajustements du brief.

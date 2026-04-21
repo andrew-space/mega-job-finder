@@ -25,7 +25,6 @@ Optionnelles:
 DATABASE_URL_UNPOOLED=<neon-direct-connection-string>
 NEXT_PUBLIC_MAPBOX_TOKEN=
 RESEND_API_KEY=
-APEC_API_KEY=<apikey_developer_apec>
 ADMIN_OPS_TOKEN=<token_ops_strong>
 ```
 
@@ -73,7 +72,8 @@ npx prisma db push
 curl -H "x-ops-token: <ADMIN_OPS_TOKEN>" https://web-xi-plum-29.vercel.app/api/ops/refresh
 ```
 
-## Note Stage 6 (APEC)
+## Note data strategy MVP
 
-- Le collector APEC est actif seulement si `APEC_API_KEY` est defini.
-- En absence de cle, le refresh reste operationnel via France Travail uniquement.
+- Source primaire: France Travail (API officielle).
+- Sources secondaires en preparation via architecture modulaire: Greenhouse, Lever, custom company pages.
+- Aucun scraping heavy (LinkedIn, Indeed, HelloWork) n'est inclus a ce stade.

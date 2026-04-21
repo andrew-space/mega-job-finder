@@ -7,7 +7,6 @@ const sourcePriority: Record<JobOffer["source"], number> = {
   indeed: 5,
   hellowork: 4,
   france_travail: 3,
-  apec: 2,
   leboncoin: 1,
 };
 

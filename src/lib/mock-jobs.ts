@@ -60,8 +60,8 @@ export const mockJobs: JobOffer[] = [
   },
   {
     id: "jr-004",
-    sourceId: "apec-3301",
-    source: "apec",
+    sourceId: "ft-3301",
+    source: "france_travail",
     title: "Ingénieur Logiciel Embarqué C++",
     company: "Airbus",
     location: { city: "Toulouse", department: "31", region: "Occitanie", coords: { lat: 43.6047, lng: 1.4442 } },
@@ -136,8 +136,8 @@ export const mockJobs: JobOffer[] = [
   },
   {
     id: "jr-008",
-    sourceId: "apec-7721",
-    source: "apec",
+    sourceId: "ft-7721",
+    source: "france_travail",
     title: "Chef de Projet Digital",
     company: "Sanofi",
     location: { city: "Strasbourg", department: "67", region: "Grand Est", coords: { lat: 48.5734, lng: 7.7521 } },
@@ -212,8 +212,8 @@ export const mockJobs: JobOffer[] = [
   },
   {
     id: "jr-012",
-    sourceId: "apec-5544",
-    source: "apec",
+    sourceId: "ft-5544",
+    source: "france_travail",
     title: "Responsable Marketing Acquisition",
     company: "ManoMano",
     location: { city: "Bordeaux", department: "33", region: "Nouvelle-Aquitaine", coords: { lat: 44.8312, lng: -0.5757 } },
