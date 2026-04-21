@@ -28,3 +28,25 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Start app
+        run: npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/jobradar.log 2>&1 &
+
+      - name: Wait for app
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/jobs > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/jobradar.log
+          exit 1
+
+      - name: Probe detail API
+        run: curl --fail --silent http://127.0.0.1:3000/api/jobs/jr-001 > /dev/null
+
+      - name: Smoke test
+        env:
+          SMOKE_TEST_BASE_URL: http://127.0.0.1:3000
+        run: npm run test:smoke

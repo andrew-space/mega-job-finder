@@ -1,42 +1,87 @@
-# Deployment runbook (GitHub + Vercel)
+# Deployment runbook (JobRadar/web + Vercel)
 
-## 1) Push sur GitHub
+## 1) Repo et branche
 
-- Creer un repo public: mega-job-finder
-- Depuis le dossier web:
-  - git add .
-  - git commit -m "feat: bootstrap JobRadar demo"
-  - git branch -M main
-  - git remote add origin https://github.com/<user>/mega-job-finder.git
-  - git push -u origin main
+- Repo actuel: `andrew-space/mega-job-finder`
+- Application concernee: `JobRadar/web`
+- Branche cible de release: `main`
 
-## 2) Import Vercel
+## 2) Point critique: git push ne deploie pas
 
-- Vercel > Add New > Project > Import Git Repository
-- Selectionner mega-job-finder
-- Framework detecte: Next.js
-- Build command: npm run build
-- Output: .next
+- Ce projet Vercel n'est pas relie a un auto-deploy GitHub.
+- Un `git push` met a jour le code source, mais ne publie pas la nouvelle version en production.
+- La release se fait explicitement depuis `JobRadar/web` via la CLI Vercel.
 
-## 3) Variables a configurer dans Vercel
+## 3) Pre-flight local
 
-- NEXT_PUBLIC_APP_NAME
-- FRANCE_TRAVAIL_CLIENT_ID
-- FRANCE_TRAVAIL_CLIENT_SECRET
-- FRANCE_TRAVAIL_SCOPE
-- FRANCE_TRAVAIL_TOKEN_URL
-- FRANCE_TRAVAIL_SEARCH_URL
+Depuis `JobRadar/web`:
 
-## 4) Verification apres deploy
+```bash
+npm run lint
+npm run build
+npm run test:smoke
+```
 
-- Ouvrir / puis verifier l interface split-view
-- Tester API mock: /api/jobs
-- Tester API live: /api/jobs?live=1&q=marketing&city=paris
-- Verifier que le fallback mock fonctionne si les cles sont absentes
+Le smoke-test couvre `/`, `/search`, `/api/jobs`, `/api/jobs/jr-001` et `/jobs/jr-001` sans dependre des secrets France Travail.
 
-## 5) Checklist de demo
+## 4) Variables attendues en production
 
-- Mention claire des sources officielles
-- Aucun flux de candidature intercepte
-- Credits source visibles sur les cards d offres
-- Repository public avec CI verte
+Variables coeur:
+- `NEXT_PUBLIC_APP_NAME`
+- `DATABASE_URL`
+
+Variables France Travail pour le mode live:
+- `FRANCE_TRAVAIL_CLIENT_ID`
+- `FRANCE_TRAVAIL_CLIENT_SECRET`
+- `FRANCE_TRAVAIL_SCOPE`
+- `FRANCE_TRAVAIL_TOKEN_URL`
+- `FRANCE_TRAVAIL_SEARCH_URL`
+
+Optionnelles:
+- `DATABASE_URL_UNPOOLED`
+- `NEXT_PUBLIC_MAPBOX_TOKEN`
+- `RESEND_API_KEY`
+
+## 5) Cas Neon / Prisma
+
+- Si la base Neon change, ou si la prod pointe vers une base vierge, la presence de `DATABASE_URL` ne suffit pas.
+- Il faut appliquer le schema Prisma avant d'attendre un mode `live-db` stable.
+- Workflow recommande:
+
+```bash
+vercel env pull .env.vercel.production
+npx prisma db push
+```
+
+- Ensuite retester `/api/jobs/refresh` puis `/api/jobs?live=1&q=react&city=paris`.
+
+## 6) Deploy production
+
+Depuis `JobRadar/web`:
+
+```bash
+npx vercel --prod --yes
+```
+
+En environnement PowerShell Windows, si `npx.ps1` est bloque, utiliser la variante deja validee dans le projet:
+
+```bash
+node -e "require('child_process').execSync('npx vercel --prod --yes 2>&1', {cwd: process.cwd(), stdio: 'inherit', shell: true})"
+```
+
+## 7) Verification apres deploy
+
+- Ouvrir `/` et verifier que l'UI charge normalement.
+- Tester `/search`.
+- Tester `/api/jobs` pour confirmer le mode mock sain.
+- Tester `/api/jobs/refresh` pour confirmer l'ingestion.
+- Tester `/api/jobs?live=1&q=react&city=paris` pour verifier le mode `live-db`.
+- Ouvrir une fiche detail live ou mock pour verifier le rendu App Router.
+
+## 8) Checklist de release
+
+- CI verte sur `main`
+- Smoke-test local vert avant deploy
+- Variables Vercel presentes
+- Schema Prisma applique si la base a change
+- Deploy manuel Vercel execute
