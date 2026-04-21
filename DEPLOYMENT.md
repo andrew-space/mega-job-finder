@@ -88,7 +88,8 @@ node -e "require('child_process').execSync('npx vercel --prod --yes 2>&1', {cwd:
 
 ## 9) Auto-refresh (Stage 3)
 
-- Un cron Vercel est configure via `vercel.json` pour appeler `/api/jobs/refresh?maxResults=100` toutes les 6 heures.
+- Un cron Vercel est configure via `vercel.json` pour appeler `/api/jobs/refresh?maxResults=100` 1 fois par jour (`0 6 * * *`).
+- Ce rythme est compatible avec les limites du plan Hobby.
 - L'endpoint accepte maintenant `GET` (cron) et `POST` (manuel), avec la meme logique de refresh.
 - En cas de diagnostic, verifier les logs Vercel et tester manuellement:
 
