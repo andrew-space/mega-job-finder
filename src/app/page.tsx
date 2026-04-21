@@ -11,7 +11,7 @@ export default function Home() {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">JobRadar</p>
         <h1 className="text-2xl font-semibold text-slate-900">Aggregateur emploi France, version demo</h1>
         <p className="text-sm text-slate-600">
-          Split-view liste + carte, dedup intelligente, API mock prete a brancher sur France Travail et APEC.
+          Split-view liste + carte, dedup intelligente, mode mock/live branche sur France Travail.
         </p>
       </header>
 
