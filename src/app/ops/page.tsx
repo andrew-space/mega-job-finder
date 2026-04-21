@@ -3,7 +3,7 @@ import { OpsRefreshPanel } from "@/features/ops/components/ops-refresh-panel";
 
 export const metadata = {
   title: "Ops Dashboard · JobRadar",
-  description: "Dashboard opérateur minimal pour monitorer et déclencher les refresh jobs.",
+  description: "Dashboard opérateur pour monitorer le refresh jobs et piloter les sources entreprise.",
 };
 
 export default function OpsPage() {
@@ -22,13 +22,13 @@ export default function OpsPage() {
       </nav>
 
       <main className="mx-auto max-w-4xl px-6 py-12">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Stage 4</p>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Stage 7</p>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
           Dashboard opérateur
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">
-          Monitoring simple du pipeline refresh et déclenchement manuel sécurisé,
-          sans infrastructure additionnelle.
+          Monitoring du refresh, registre visible des sources entreprise, détection Greenhouse/Lever,
+          et sync manuel des connecteurs MVP.
         </p>
 
         <div className="mt-8">
