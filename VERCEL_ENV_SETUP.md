@@ -25,6 +25,7 @@ Optionnelles:
 DATABASE_URL_UNPOOLED=<neon-direct-connection-string>
 NEXT_PUBLIC_MAPBOX_TOKEN=
 RESEND_API_KEY=
+APEC_API_KEY=<apikey_developer_apec>
 ADMIN_OPS_TOKEN=<token_ops_strong>
 ```
 
@@ -65,8 +66,14 @@ npx prisma db push
 2. Redeployer en prod avec `npx vercel --prod --yes`.
 3. Verifier `https://web-xi-plum-29.vercel.app/api/jobs/refresh`.
 4. Verifier `https://web-xi-plum-29.vercel.app/api/jobs?live=1&q=react&city=paris`.
-5. Verifier l'API ops avec token:
+5. Verifier `https://web-xi-plum-29.vercel.app/profile` (insights live, fallback mock si DB down).
+6. Verifier l'API ops avec token:
 
 ```bash
 curl -H "x-ops-token: <ADMIN_OPS_TOKEN>" https://web-xi-plum-29.vercel.app/api/ops/refresh
 ```
+
+## Note Stage 6 (APEC)
+
+- Le collector APEC est actif seulement si `APEC_API_KEY` est defini.
+- En absence de cle, le refresh reste operationnel via France Travail uniquement.
