@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { JobOffer } from "@/lib/job-types";
 import { mockJobs } from "@/lib/mock-jobs";
-import { getRelatedJobsFromDb } from "@/server/jobs-store";
+import { getJobByIdFromDb, getRelatedJobsFromDb } from "@/server/jobs-store";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -10,21 +10,9 @@ interface Props {
 
 async function getJob(id: string): Promise<JobOffer | null> {
   try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL ??
-      (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000");
-
-    const res = await fetch(`${baseUrl}/api/jobs/${encodeURIComponent(id)}`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) return null;
-    const json = (await res.json()) as { data?: JobOffer };
-    return json.data ?? null;
+    return (await getJobByIdFromDb(id)) ?? mockJobs.find((job) => job.id === id) ?? null;
   } catch {
-    return null;
+    return mockJobs.find((job) => job.id === id) ?? null;
   }
 }
 

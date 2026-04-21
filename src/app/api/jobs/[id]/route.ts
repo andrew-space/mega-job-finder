@@ -10,11 +10,16 @@ interface Context {
 export async function GET(_: Request, context: Context) {
   const { id } = await context.params;
 
+  let dbJob = null;
+
+  try {
+    dbJob = await getJobByIdFromDb(id);
+  } catch (error) {
+    console.error("Job detail DB lookup failed, falling back to cache/mock:", error);
+  }
+
   // DB first for persistence, then process cache, then mock fallback
-  const job =
-    (await getJobByIdFromDb(id)) ??
-    jobCache.get(id) ??
-    mockJobs.find((item) => item.id === id);
+  const job = dbJob ?? jobCache.get(id) ?? mockJobs.find((item) => item.id === id);
 
   if (!job) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
