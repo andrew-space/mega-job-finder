@@ -59,6 +59,9 @@ const EXPERIENCE_LABEL: Record<string, string> = {
 
 const SOURCE_LABEL: Record<string, string> = {
   france_travail: "France Travail",
+  greenhouse: "Greenhouse",
+  lever: "Lever",
+  custom: "Custom",
   linkedin: "LinkedIn",
   indeed: "Indeed",
   wttj: "Welcome to the Jungle",

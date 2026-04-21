@@ -7,7 +7,10 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:smoke": "node scripts/smoke-test.mjs"
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "test:smoke:sync-source": "node scripts/smoke-sync-source.mjs",
+    "test:unit": "tsx --test tests/*.test.ts",
+    "ops:seed-sync-sources": "node scripts/seed-and-sync-company-sources.mjs"
   },
   "dependencies": {
     "next": "16.2.4",
@@ -27,6 +30,7 @@
     "@types/leaflet": "^1.9",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "tsx": "^4.19.2",
     "tailwindcss": "^4",
     "typescript": "^5",
     "prisma": "^5.8.0"

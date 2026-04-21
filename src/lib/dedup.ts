@@ -1,6 +1,9 @@
 import type { JobOffer } from "@/lib/job-types";
 
 const sourcePriority: Record<JobOffer["source"], number> = {
+  greenhouse: 9,
+  lever: 8,
+  custom: 7,
   wttj: 8,
   linkedin: 7,
   cadremploi: 6,

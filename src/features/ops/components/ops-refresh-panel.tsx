@@ -11,6 +11,14 @@ type OpsStatus = {
   lastErrorMessage: string | null;
   lastDataSyncAt: string | null;
   totalJobs: number;
+  lastSourceStats?: Array<{
+    sourceType: string;
+    fetched: number;
+    inserted: number;
+    updated: number;
+    failed: boolean;
+    error: string | null;
+  }>;
 };
 
 function formatIso(value: string | null): string {
@@ -24,6 +32,7 @@ export function OpsRefreshPanel() {
   const [token, setToken] = useState("");
   const [status, setStatus] = useState<OpsStatus | null>(null);
   const [running, setRunning] = useState(false);
+  const [syncingSources, setSyncingSources] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState<string | null>(null);
@@ -90,6 +99,41 @@ export function OpsRefreshPanel() {
     }
   }
 
+  async function triggerCompanySourcesSync() {
+    if (!token.trim()) {
+      setError("Token requis.");
+      return;
+    }
+
+    setSyncingSources(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/ops/sources", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-ops-token": token.trim(),
+        },
+        body: JSON.stringify({ action: "sync", limit: 50 }),
+      });
+
+      const json = await response.json();
+      if (!response.ok || !json.ok) {
+        throw new Error(json.error ?? "Sync sources en échec.");
+      }
+
+      await loadStatus();
+      setLastAction(
+        `Sync sources: ${json.result?.fetched ?? 0} fetchées, ${json.result?.inserted ?? 0} insérées, ${json.result?.updated ?? 0} mises à jour`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setSyncingSources(false);
+    }
+  }
+
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-6">
       <h2 className="text-lg font-semibold text-slate-900">Refresh Control Panel</h2>
@@ -116,10 +160,18 @@ export function OpsRefreshPanel() {
         <button
           type="button"
           onClick={triggerRefresh}
-          disabled={running || loading}
+          disabled={running || loading || syncingSources}
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {running ? "Refresh en cours..." : "Refresh now"}
+        </button>
+        <button
+          type="button"
+          onClick={triggerCompanySourcesSync}
+          disabled={running || loading || syncingSources}
+          className="rounded-md bg-slate-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {syncingSources ? "Sync sources..." : "Sync company sources"}
         </button>
       </div>
 
@@ -156,6 +208,21 @@ export function OpsRefreshPanel() {
             {status.lastErrorMessage ? (
               <p className="mt-1 text-xs text-slate-500">{status.lastErrorMessage}</p>
             ) : null}
+          </div>
+          <div className="rounded-lg border border-slate-200 p-3 text-sm sm:col-span-2">
+            <p className="text-slate-500">Stats par source (dernier run)</p>
+            {status.lastSourceStats && status.lastSourceStats.length > 0 ? (
+              <div className="mt-2 space-y-1 text-xs text-slate-700">
+                {status.lastSourceStats.map((stat) => (
+                  <p key={`${stat.sourceType}-${stat.error ?? "ok"}`}>
+                    {stat.sourceType}: fetched {stat.fetched} · inserted {stat.inserted} · updated {stat.updated}
+                    {stat.failed ? ` · failed (${stat.error ?? "unknown"})` : ""}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-slate-500">Aucune métrique source disponible.</p>
+            )}
           </div>
         </div>
       ) : null}

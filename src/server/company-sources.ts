@@ -32,11 +32,29 @@ export async function registerCompanySource(input: RegisterCompanySourceInput) {
   });
 }
 
-export async function listActiveCompanySources() {
+export async function listCompanySources(options: { activeOnly?: boolean } = {}) {
   return prisma.companySource.findMany({
-    where: { isActive: true },
+    where: options.activeOnly ? { isActive: true } : undefined,
     orderBy: [{ companyName: "asc" }],
   });
+}
+
+export async function updateCompanySource(
+  id: string,
+  patch: { companyName?: string; careersUrl?: string; isActive?: boolean }
+) {
+  return prisma.companySource.update({
+    where: { id },
+    data: {
+      companyName: patch.companyName,
+      careersUrl: patch.careersUrl,
+      isActive: patch.isActive,
+    },
+  });
+}
+
+export async function getCompanySourceById(id: string) {
+  return prisma.companySource.findUnique({ where: { id } });
 }
 
 export async function markCompanySourceSynced(sourceId: string) {

@@ -2,6 +2,9 @@
 // Central type definitions for JobRadar
 
 export type JobSource = 
+  | 'greenhouse'
+  | 'lever'
+  | 'custom'
   | 'france_travail'
   | 'linkedin'
   | 'indeed'

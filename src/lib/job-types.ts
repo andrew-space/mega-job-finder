@@ -1,4 +1,7 @@
 export type JobSource =
+  | "greenhouse"
+  | "lever"
+  | "custom"
   | "linkedin"
   | "indeed"
   | "wttj"

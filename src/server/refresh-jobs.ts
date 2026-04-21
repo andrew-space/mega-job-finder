@@ -41,6 +41,14 @@ type RefreshMonitor = {
   lastErrorAt: string | null;
   lastErrorCode: string | null;
   lastErrorMessage: string | null;
+  lastSourceStats: Array<{
+    sourceType: string;
+    fetched: number;
+    inserted: number;
+    updated: number;
+    failed: boolean;
+    error: string | null;
+  }>;
 };
 
 const refreshMonitor: RefreshMonitor = {
@@ -50,7 +58,21 @@ const refreshMonitor: RefreshMonitor = {
   lastErrorAt: null,
   lastErrorCode: null,
   lastErrorMessage: null,
+  lastSourceStats: [],
 };
+
+export function setRefreshSourceStats(
+  stats: Array<{
+    sourceType: string;
+    fetched: number;
+    inserted: number;
+    updated: number;
+    failed: boolean;
+    error: string | null;
+  }>
+) {
+  refreshMonitor.lastSourceStats = stats;
+}
 
 function parseMaxResults(value: number | undefined): number {
   if (!value || Number.isNaN(value)) return 100;
@@ -124,6 +146,16 @@ export async function runRefreshWithMonitoring(payload: RefreshPayload, trigger:
 
   try {
     const result = await runRefresh(payload);
+    setRefreshSourceStats([
+      {
+        sourceType: "francetravail",
+        fetched: result.summary.fetched,
+        inserted: result.summary.inserted,
+        updated: result.summary.updated,
+        failed: false,
+        error: null,
+      },
+    ]);
     refreshMonitor.lastSuccessAt = new Date().toISOString();
     refreshMonitor.lastErrorAt = null;
     refreshMonitor.lastErrorCode = null;

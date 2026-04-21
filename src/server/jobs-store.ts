@@ -9,6 +9,9 @@ import type {
 import { prisma } from "@/server/db";
 
 const ALLOWED_SOURCES: JobSource[] = [
+  "greenhouse",
+  "lever",
+  "custom",
   "linkedin",
   "indeed",
   "wttj",
