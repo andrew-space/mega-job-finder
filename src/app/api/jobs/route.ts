@@ -8,6 +8,19 @@ import { getJobsFromDb, upsertJobs } from "@/server/jobs-store";
 // Module-level cache so /api/jobs/[id] can serve live offers fetched here
 export const jobCache = new Map<string, JobOffer>();
 
+const FT_TIMEOUT_MS = 15000;
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  const timeout = new Promise<never>((_, reject) => {
+    const timer = setTimeout(() => {
+      clearTimeout(timer);
+      reject(new Error(`France Travail timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]);
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim() || undefined;
@@ -22,9 +35,12 @@ export async function GET(request: Request) {
 
   if (live) {
     try {
-      const liveOffers = await fetchJobsFromFranceTravail(
-        { q, city, contractTypes: contractType ? [contractType] : undefined },
-        { maxResults: 50 }
+      const liveOffers = await withTimeout(
+        fetchJobsFromFranceTravail(
+          { q, city, contractTypes: contractType ? [contractType] : undefined },
+          { maxResults: 50 }
+        ),
+        FT_TIMEOUT_MS
       );
 
       // Populate cache for detail page lookups

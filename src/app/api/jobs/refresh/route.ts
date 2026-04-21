@@ -10,9 +10,22 @@ type RefreshPayload = {
   contractType?: ContractType;
 };
 
+const FT_TIMEOUT_MS = 20000;
+
 function parseMaxResults(value: number | undefined): number {
   if (!value || Number.isNaN(value)) return 100;
   return Math.max(1, Math.min(200, Math.floor(value)));
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  const timeout = new Promise<never>((_, reject) => {
+    const timer = setTimeout(() => {
+      clearTimeout(timer);
+      reject(new Error(`France Travail timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]);
 }
 
 export async function POST(request: Request) {
@@ -30,9 +43,12 @@ export async function POST(request: Request) {
   const maxResults = parseMaxResults(payload.maxResults);
 
   try {
-    const liveOffers = await fetchJobsFromFranceTravail(
-      { q, city, contractTypes },
-      { maxResults }
+    const liveOffers = await withTimeout(
+      fetchJobsFromFranceTravail(
+        { q, city, contractTypes },
+        { maxResults }
+      ),
+      FT_TIMEOUT_MS
     );
 
     const { inserted, updated } = await upsertJobs(liveOffers);
