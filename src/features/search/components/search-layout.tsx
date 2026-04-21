@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { ContractType } from "@/lib/job-types";
@@ -31,6 +32,7 @@ export function SearchLayout() {
   const [liveMode, setLiveMode] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
+  const router = useRouter();
   const listRef = useRef<HTMLDivElement>(null);
 
   // Debounce search inputs
@@ -235,7 +237,7 @@ export function SearchLayout() {
                     isActive={selectedJobId === job.id}
                     onMouseEnter={() => setSelectedJobId(job.id)}
                     onMouseLeave={() => setSelectedJobId(null)}
-                    onClick={() => setSelectedJobId(job.id)}
+                    onClick={() => router.push(`/jobs/${job.id}`)}
                   />
                 </div>
               ))}

@@ -4,6 +4,9 @@ import { markDuplicates } from "@/lib/dedup";
 import type { JobOffer, ContractType } from "@/lib/job-types";
 import { mockJobs } from "@/lib/mock-jobs";
 
+// Module-level cache so /api/jobs/[id] can serve live offers fetched here
+export const jobCache = new Map<string, JobOffer>();
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim() || undefined;
@@ -22,6 +25,8 @@ export async function GET(request: Request) {
         { q, city, contractTypes: contractType ? [contractType] : undefined },
         { maxResults: 50 }
       );
+      // Populate cache for detail page lookups
+      offers.forEach((job) => jobCache.set(job.id, job));
       mode = "live";
     } catch (err) {
       console.error("France Travail fetch failed, falling back to mock:", err);
