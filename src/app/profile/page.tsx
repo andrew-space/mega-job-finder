@@ -1,5 +1,42 @@
 import Link from "next/link";
 import { mockJobs } from "@/lib/mock-jobs";
+import { prisma } from "@/server/db";
+
+async function getLiveInsights(): Promise<{
+  topSkills: [string, number][];
+  remotePercent: number;
+  totalJobs: number;
+  isLive: boolean;
+} | null> {
+  try {
+    const jobs = await prisma.jobOffer.findMany({
+      select: { skills: true, remoteType: true },
+    });
+    if (jobs.length === 0) return null;
+
+    const skillCounts: Record<string, number> = {};
+    for (const job of jobs) {
+      const skills = job.skills as string[] | null;
+      if (Array.isArray(skills)) {
+        for (const skill of skills) {
+          skillCounts[skill] = (skillCounts[skill] ?? 0) + 1;
+        }
+      }
+    }
+    const topSkills = Object.entries(skillCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6);
+
+    const remoteFriendly = jobs.filter((j) => j.remoteType !== "none").length;
+    const remotePercent = Math.round((remoteFriendly / jobs.length) * 100);
+
+    return { topSkills, remotePercent, totalJobs: jobs.length, isLive: true };
+  } catch {
+    return null;
+  }
+}
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Profil & CV · JobRadar",
@@ -38,21 +75,28 @@ const readinessChecks = [
 const doneCount = readinessChecks.filter((item) => item.done).length;
 const readinessPercent = Math.round((doneCount / readinessChecks.length) * 100);
 
-const topSkills = Object.entries(
-  mockJobs.reduce<Record<string, number>>((acc, job) => {
-    for (const skill of job.skills) {
-      acc[skill] = (acc[skill] ?? 0) + 1;
-    }
-    return acc;
-  }, {})
-)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 6);
+function getMockInsights() {
+  const topSkills = Object.entries(
+    mockJobs.reduce<Record<string, number>>((acc, job) => {
+      for (const skill of job.skills) {
+        acc[skill] = (acc[skill] ?? 0) + 1;
+      }
+      return acc;
+    }, {})
+  )
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6);
 
-const remoteFriendlyJobs = mockJobs.filter((job) => job.remote !== "none").length;
-const remotePercent = Math.round((remoteFriendlyJobs / mockJobs.length) * 100);
+  const remoteFriendlyJobs = mockJobs.filter((job) => job.remote !== "none").length;
+  const remotePercent = Math.round((remoteFriendlyJobs / mockJobs.length) * 100);
+  return { topSkills, remotePercent, totalJobs: mockJobs.length, isLive: false };
+}
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  const liveInsights = await getLiveInsights();
+  const insights = liveInsights ?? getMockInsights();
+  const { topSkills, remotePercent, totalJobs, isLive } = insights;
+
   return (
     <div className="min-h-screen bg-white">
       <nav className="flex h-14 items-center justify-between border-b border-slate-100 px-6">
@@ -68,7 +112,7 @@ export default function ProfilePage() {
       </nav>
 
       <main className="mx-auto max-w-4xl px-6 py-12">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Stage 3</p>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Stage 5</p>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
           Profil candidature
         </h1>
@@ -116,11 +160,18 @@ export default function ProfilePage() {
         </section>
 
         <section className="mt-10 rounded-xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-            Insights marché (snapshot)
+          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-500">
+            Insights marché
+            <span
+              className={`rounded px-2 py-0.5 text-xs font-semibold ${
+                isLive ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+              }`}
+            >
+              {isLive ? `live · ${totalJobs} offres` : "mock"}
+            </span>
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            {remotePercent}% des offres visibles supportent au moins du télétravail partiel.
+            {remotePercent}% des offres supportent au moins du télétravail partiel.
           </p>
 
           <div className="mt-5 flex flex-wrap gap-2">
