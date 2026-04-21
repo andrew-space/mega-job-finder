@@ -85,3 +85,13 @@ node -e "require('child_process').execSync('npx vercel --prod --yes 2>&1', {cwd:
 - Variables Vercel presentes
 - Schema Prisma applique si la base a change
 - Deploy manuel Vercel execute
+
+## 9) Auto-refresh (Stage 3)
+
+- Un cron Vercel est configure via `vercel.json` pour appeler `/api/jobs/refresh?maxResults=100` toutes les 6 heures.
+- L'endpoint accepte maintenant `GET` (cron) et `POST` (manuel), avec la meme logique de refresh.
+- En cas de diagnostic, verifier les logs Vercel et tester manuellement:
+
+```bash
+curl https://web-xi-plum-29.vercel.app/api/jobs/refresh?maxResults=100
+```

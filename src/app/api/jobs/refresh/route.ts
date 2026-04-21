@@ -28,6 +28,39 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
   return Promise.race([promise, timeout]);
 }
 
+async function runRefresh(payload: RefreshPayload) {
+  const q = payload.q?.trim() || undefined;
+  const city = payload.city?.trim() || undefined;
+  const contractTypes = payload.contractType ? [payload.contractType] : undefined;
+  const maxResults = parseMaxResults(payload.maxResults);
+
+  const liveOffers = await withTimeout(
+    fetchJobsFromFranceTravail(
+      { q, city, contractTypes },
+      { maxResults }
+    ),
+    FT_TIMEOUT_MS
+  );
+
+  const { inserted, updated } = await upsertJobs(liveOffers);
+
+  return {
+    ok: true,
+    summary: {
+      fetched: liveOffers.length,
+      inserted,
+      updated,
+      skipped: Math.max(0, liveOffers.length - inserted - updated),
+    },
+    filters: {
+      q: q ?? null,
+      city: city ?? null,
+      contractType: payload.contractType ?? null,
+      maxResults,
+    },
+  };
+}
+
 export async function POST(request: Request) {
   let payload: RefreshPayload = {};
 
@@ -37,37 +70,52 @@ export async function POST(request: Request) {
     payload = {};
   }
 
-  const q = payload.q?.trim() || undefined;
-  const city = payload.city?.trim() || undefined;
-  const contractTypes = payload.contractType ? [payload.contractType] : undefined;
-  const maxResults = parseMaxResults(payload.maxResults);
+  try {
+    return NextResponse.json(await runRefresh(payload));
+  } catch (error) {
+    console.error("Refresh pipeline failed:", error);
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+    const looksLikeMissingDbUrl = message.includes("Environment variable not found: DATABASE_URL");
+    const looksLikeTableMissing = message.includes("relation") && message.includes("does not exist");
+
+    const debug = {
+      type: error instanceof Error ? error.name : "UnknownError",
+      code: looksLikeMissingDbUrl
+        ? "DB_ENV_MISSING"
+        : looksLikeTableMissing
+        ? "DB_SCHEMA_MISSING"
+        : "REFRESH_FAILED",
+      hint: looksLikeMissingDbUrl
+        ? "DATABASE_URL not visible at runtime in this deployment"
+        : looksLikeTableMissing
+        ? "Prisma schema not applied in target database"
+        : "Check server logs for collector or database errors",
+    };
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Refresh failed",
+        debug,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+
+  const payload: RefreshPayload = {
+    q: searchParams.get("q") ?? undefined,
+    city: searchParams.get("city") ?? undefined,
+    maxResults: searchParams.get("maxResults") ? Number(searchParams.get("maxResults")) : undefined,
+    contractType: (searchParams.get("contractType") ?? undefined) as ContractType | undefined,
+  };
 
   try {
-    const liveOffers = await withTimeout(
-      fetchJobsFromFranceTravail(
-        { q, city, contractTypes },
-        { maxResults }
-      ),
-      FT_TIMEOUT_MS
-    );
-
-    const { inserted, updated } = await upsertJobs(liveOffers);
-
-    return NextResponse.json({
-      ok: true,
-      summary: {
-        fetched: liveOffers.length,
-        inserted,
-        updated,
-        skipped: Math.max(0, liveOffers.length - inserted - updated),
-      },
-      filters: {
-        q: q ?? null,
-        city: city ?? null,
-        contractType: payload.contractType ?? null,
-        maxResults,
-      },
-    });
+    return NextResponse.json(await runRefresh(payload));
   } catch (error) {
     console.error("Refresh pipeline failed:", error);
 

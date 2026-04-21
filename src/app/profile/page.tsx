@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { mockJobs } from "@/lib/mock-jobs";
 
 export const metadata = {
   title: "Profil & CV · JobRadar",
@@ -37,6 +38,20 @@ const readinessChecks = [
 const doneCount = readinessChecks.filter((item) => item.done).length;
 const readinessPercent = Math.round((doneCount / readinessChecks.length) * 100);
 
+const topSkills = Object.entries(
+  mockJobs.reduce<Record<string, number>>((acc, job) => {
+    for (const skill of job.skills) {
+      acc[skill] = (acc[skill] ?? 0) + 1;
+    }
+    return acc;
+  }, {})
+)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 6);
+
+const remoteFriendlyJobs = mockJobs.filter((job) => job.remote !== "none").length;
+const remotePercent = Math.round((remoteFriendlyJobs / mockJobs.length) * 100);
+
 export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-white">
@@ -53,7 +68,7 @@ export default function ProfilePage() {
       </nav>
 
       <main className="mx-auto max-w-4xl px-6 py-12">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Stage 2</p>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Stage 3</p>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
           Profil candidature
         </h1>
@@ -98,6 +113,26 @@ export default function ProfilePage() {
               </span>
             </article>
           ))}
+        </section>
+
+        <section className="mt-10 rounded-xl border border-slate-200 p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+            Insights marché (snapshot)
+          </h2>
+          <p className="mt-2 text-sm text-slate-600">
+            {remotePercent}% des offres visibles supportent au moins du télétravail partiel.
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            {topSkills.map(([skill, count]) => (
+              <span
+                key={skill}
+                className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+              >
+                {skill} · {count}
+              </span>
+            ))}
+          </div>
         </section>
       </main>
     </div>
