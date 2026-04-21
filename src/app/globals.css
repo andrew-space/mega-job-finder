@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #111111;
+  --accent: #2563eb;
+  --success: #16a34a;
 }
 
 @theme inline {
@@ -14,13 +16,16 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0b1220;
+    --foreground: #e2e8f0;
   }
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at 12% 10%, rgba(37, 99, 235, 0.15), transparent 30%),
+    radial-gradient(circle at 80% 0%, rgba(22, 163, 74, 0.1), transparent 35%),
+    var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
 }

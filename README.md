@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JobRadar (Demo)
 
-## Getting Started
+Aggregateur d offres emploi France avec UX split-view (liste + carte), dedup intelligente, et API routes pretes pour integration des sources officielles.
 
-First, run the development server:
+## Etat actuel
+
+- UI demo split-view operationnelle
+- API mock: /api/jobs et /api/jobs/[id]
+- Moteur dedup: src/lib/dedup.ts
+- Donnees de demonstration: src/lib/mock-jobs.ts
+
+## Lancer en local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App: http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variables d environnement
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Dupliquer .env.example vers .env.local et renseigner les cles.
 
-## Learn More
+## Plan de demo GitHub/Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Creer le repo GitHub public.
+2. Push du dossier web.
+3. Importer le repo dans Vercel.
+4. Ajouter les variables d environnement dans Vercel.
+5. Verifier que /api/jobs repond en production.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes produit
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Prioriser France Travail + APEC pour rester conforme et stable.
+- Ajouter les collecteurs scraping ensuite avec garde-fous (rate-limit, robots, retries).
+- Voir PROJECT_REVIEW.md pour la critique et les ajustements du brief.
