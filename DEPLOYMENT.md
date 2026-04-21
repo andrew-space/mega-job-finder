@@ -96,3 +96,17 @@ node -e "require('child_process').execSync('npx vercel --prod --yes 2>&1', {cwd:
 ```bash
 curl https://web-xi-plum-29.vercel.app/api/jobs/refresh?maxResults=100
 ```
+
+## 10) Ops dashboard (Stage 4)
+
+- Ajouter `ADMIN_OPS_TOKEN` dans les variables Vercel (valeur forte, non partagée).
+- Le dashboard `/ops` utilise ce token pour appeler `/api/ops/refresh`.
+- L'API ops expose:
+	- `GET /api/ops/refresh` pour lire le statut opérateur
+	- `POST /api/ops/refresh` pour déclencher un refresh manuel
+
+Exemple de vérification API sécurisée:
+
+```bash
+curl -H "x-ops-token: <ADMIN_OPS_TOKEN>" https://web-xi-plum-29.vercel.app/api/ops/refresh
+```

@@ -25,7 +25,10 @@ Optionnelles:
 DATABASE_URL_UNPOOLED=<neon-direct-connection-string>
 NEXT_PUBLIC_MAPBOX_TOKEN=
 RESEND_API_KEY=
+ADMIN_OPS_TOKEN=<token_ops_strong>
 ```
+
+`ADMIN_OPS_TOKEN` est requis pour le dashboard opérateur Stage 4 (`/ops`) et l'API sécurisée `/api/ops/refresh`.
 
 ## Mode rapide: dashboard Vercel
 
@@ -62,3 +65,8 @@ npx prisma db push
 2. Redeployer en prod avec `npx vercel --prod --yes`.
 3. Verifier `https://web-xi-plum-29.vercel.app/api/jobs/refresh`.
 4. Verifier `https://web-xi-plum-29.vercel.app/api/jobs?live=1&q=react&city=paris`.
+5. Verifier l'API ops avec token:
+
+```bash
+curl -H "x-ops-token: <ADMIN_OPS_TOKEN>" https://web-xi-plum-29.vercel.app/api/ops/refresh
+```
