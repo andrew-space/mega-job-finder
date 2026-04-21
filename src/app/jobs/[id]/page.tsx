@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { JobOffer } from "@/lib/job-types";
+import { mockJobs } from "@/lib/mock-jobs";
+import { getRelatedJobsFromDb } from "@/server/jobs-store";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -24,6 +26,31 @@ async function getJob(id: string): Promise<JobOffer | null> {
   } catch {
     return null;
   }
+}
+
+function getRelatedJobsFromMock(job: JobOffer, limit = 4): JobOffer[] {
+  const refSkills = new Set(job.skills.map((skill) => skill.toLowerCase()));
+
+  return mockJobs
+    .filter((candidate) => candidate.id !== job.id)
+    .map((candidate) => {
+      let score = 0;
+      if (candidate.location.city === job.location.city) score += 4;
+      if (candidate.contractType === job.contractType) score += 2;
+      if (candidate.remote === job.remote) score += 1;
+      for (const skill of candidate.skills) {
+        if (refSkills.has(skill.toLowerCase())) score += 3;
+      }
+
+      return { candidate, score };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return new Date(b.candidate.publishedAt).getTime() - new Date(a.candidate.publishedAt).getTime();
+    })
+    .slice(0, limit)
+    .map((entry) => entry.candidate);
 }
 
 const CONTRACT_BADGE: Record<string, string> = {
@@ -78,6 +105,17 @@ export default async function JobDetailPage({ params }: Props) {
   const job = await getJob(id);
 
   if (!job) notFound();
+
+  let relatedJobs: JobOffer[] = [];
+  try {
+    relatedJobs = await getRelatedJobsFromDb(job, 4);
+  } catch {
+    relatedJobs = [];
+  }
+
+  if (relatedJobs.length === 0) {
+    relatedJobs = getRelatedJobsFromMock(job, 4);
+  }
 
   const salary = formatSalary(job.salary);
   const badgeClass =
@@ -228,6 +266,72 @@ export default async function JobDetailPage({ params }: Props) {
             {job.description}
           </p>
         </div>
+
+        {relatedJobs.length > 0 && (
+          <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-700">
+                  Offres similaires
+                </h2>
+                <p className="mt-1 text-xs text-slate-400">
+                  Même zone, contrat ou compétences proches.
+                </p>
+              </div>
+              <Link
+                href="/search"
+                className="text-xs font-medium text-blue-700 hover:text-blue-800"
+              >
+                Voir plus
+              </Link>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {relatedJobs.map((relatedJob) => {
+                const relatedSalary = formatSalary(relatedJob.salary);
+
+                return (
+                  <Link
+                    key={relatedJob.id}
+                    href={`/jobs/${relatedJob.id}`}
+                    className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-slate-300 hover:bg-white"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900">
+                          {relatedJob.title}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500">{relatedJob.company}</p>
+                      </div>
+                      <span className="shrink-0 text-[11px] text-slate-400">
+                        {timeAgo(relatedJob.publishedAt)}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                      <span>{relatedJob.location.city}</span>
+                      <span>{relatedJob.contractType}</span>
+                      {relatedSalary && <span className="font-medium text-slate-700">{relatedSalary}</span>}
+                    </div>
+
+                    {relatedJob.skills.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1">
+                        {relatedJob.skills.slice(0, 3).map((skill) => (
+                          <span
+                            key={skill}
+                            className="rounded bg-white px-1.5 py-0.5 text-[10px] text-slate-500"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* ── Bottom CTA ── */}
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-6 text-center">

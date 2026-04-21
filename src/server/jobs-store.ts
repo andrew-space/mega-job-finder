@@ -223,3 +223,48 @@ export async function getJobByIdFromDb(id: string): Promise<JobOffer | null> {
   if (!row) return null;
   return dbJobToAppJob(row);
 }
+
+function scoreRelatedJob(reference: JobOffer, candidate: JobOffer): number {
+  let score = 0;
+
+  if (reference.location.city === candidate.location.city) score += 4;
+  if (reference.contractType === candidate.contractType) score += 2;
+  if (reference.company === candidate.company) score += 1;
+  if (reference.remote === candidate.remote) score += 1;
+
+  const referenceSkills = new Set(reference.skills.map((skill) => skill.toLowerCase()));
+  for (const skill of candidate.skills) {
+    if (referenceSkills.has(skill.toLowerCase())) score += 3;
+  }
+
+  return score;
+}
+
+export async function getRelatedJobsFromDb(job: JobOffer, limit = 4): Promise<JobOffer[]> {
+  const rows = await prisma.jobOffer.findMany({
+    where: {
+      id: { not: job.id },
+      OR: [
+        { city: job.location.city },
+        { contractType: job.contractType },
+        { source: job.source },
+      ],
+    },
+    orderBy: { publishedAt: "desc" },
+    take: 24,
+  });
+
+  return rows
+    .map(dbJobToAppJob)
+    .map((candidate) => ({
+      candidate,
+      score: scoreRelatedJob(job, candidate),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return new Date(b.candidate.publishedAt).getTime() - new Date(a.candidate.publishedAt).getTime();
+    })
+    .slice(0, limit)
+    .map((entry) => entry.candidate);
+}
