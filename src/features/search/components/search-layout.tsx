@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { clsx } from "clsx";
 import type { ContractType } from "@/lib/job-types";
 import { useJobs } from "@/features/search/hooks/use-jobs";
 import { JobCard } from "@/features/search/components/job-card";
@@ -31,6 +32,7 @@ export function SearchLayout() {
   const [contractType, setContractType] = useState<string>("");
   const [liveMode, setLiveMode] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<"list" | "map">("list");
 
   const router = useRouter();
   const listRef = useRef<HTMLDivElement>(null);
@@ -53,6 +55,14 @@ export function SearchLayout() {
 
   const jobs = data?.data ?? [];
   const mode = data?.meta.mode;
+  const selectedJob = jobs.find((job) => job.id === selectedJobId) ?? null;
+
+  const modeConfig =
+    mode === "live-db"
+      ? { label: "France Travail live", className: "bg-emerald-100 text-emerald-700" }
+      : mode === "live-fallback-mock"
+      ? { label: "Fallback mock", className: "bg-amber-100 text-amber-700" }
+      : { label: "Données mock", className: "bg-slate-100 text-slate-500" };
 
   // Scroll selected job into view in the list
   useEffect(() => {
@@ -65,16 +75,44 @@ export function SearchLayout() {
     <div className="flex h-screen flex-col bg-slate-50">
       {/* ── Top Search Bar ── */}
       <header className="shrink-0 border-b border-slate-200 bg-white shadow-sm">
-        <div className="flex h-14 items-center gap-4 px-4">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="shrink-0 text-sm font-bold tracking-tight text-slate-900"
-          >
-            JobRadar
-          </Link>
+        <div className="px-4 py-3 md:flex md:h-14 md:items-center md:gap-4 md:py-0">
+          <div className="mb-3 flex items-center justify-between gap-3 md:mb-0 md:shrink-0">
+            <Link
+              href="/"
+              className="shrink-0 text-sm font-bold tracking-tight text-slate-900"
+            >
+              JobRadar
+            </Link>
 
-          <div className="flex flex-1 items-center gap-2">
+            <div className="flex items-center gap-2 md:hidden">
+              <div className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+                <button
+                  onClick={() => setMobileView("list")}
+                  className={clsx(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-all",
+                    mobileView === "list"
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500"
+                  )}
+                >
+                  Liste
+                </button>
+                <button
+                  onClick={() => setMobileView("map")}
+                  className={clsx(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-all",
+                    mobileView === "map"
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500"
+                  )}
+                >
+                  Carte
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 md:flex-1 md:flex-row md:items-center">
             {/* Keyword */}
             <div className="relative flex-1">
               <svg
@@ -100,7 +138,7 @@ export function SearchLayout() {
             </div>
 
             {/* City */}
-            <div className="relative w-44">
+            <div className="relative md:w-44">
               <svg
                 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
                 fill="none"
@@ -133,7 +171,7 @@ export function SearchLayout() {
             <select
               value={contractType}
               onChange={(e) => setContractType(e.target.value)}
-              className="h-9 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="h-9 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 md:w-auto"
             >
               <option value="">Tous contrats</option>
               {CONTRACT_TYPES.map((c) => (
@@ -145,7 +183,7 @@ export function SearchLayout() {
           </div>
 
           {/* Live / Mock toggle */}
-          <div className="flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
+          <div className="mt-2 flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1 md:mt-0">
             <button
               onClick={() => setLiveMode(false)}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
@@ -183,15 +221,18 @@ export function SearchLayout() {
           </span>
           {mode && (
             <span
-              className={`ml-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                mode === "live"
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-slate-100 text-slate-500"
-              }`}
+              className={clsx(
+                "ml-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                modeConfig.className
+              )}
             >
-              {mode === "live" ? "France Travail live" : "Données mock"}
+              {modeConfig.label}
             </span>
           )}
+
+          <span className="ml-auto text-[11px] text-slate-400 md:hidden">
+            {mobileView === "list" ? "Vue liste" : "Vue carte"}
+          </span>
         </div>
       </header>
 
@@ -200,7 +241,11 @@ export function SearchLayout() {
         {/* Job List */}
         <div
           ref={listRef}
-          className="w-full overflow-y-auto border-r border-slate-200 bg-white md:w-[400px] lg:w-[440px]"
+          className={clsx(
+            "overflow-y-auto bg-white md:w-[400px] md:border-r md:border-slate-200 lg:w-[440px]",
+            mobileView === "list" ? "w-full flex-1" : "hidden",
+            "md:block"
+          )}
         >
           {isLoading ? (
             <div className="space-y-px">
@@ -245,12 +290,43 @@ export function SearchLayout() {
         </div>
 
         {/* Map */}
-        <div className="hidden flex-1 md:flex md:flex-col">
+        <div
+          className={clsx(
+            "relative bg-white",
+            mobileView === "map" ? "flex flex-1 flex-col" : "hidden",
+            "md:flex md:flex-1 md:flex-col"
+          )}
+        >
           <MapView
             jobs={jobs}
             selectedJobId={selectedJobId}
             onJobSelect={setSelectedJobId}
           />
+
+          {mobileView === "map" && selectedJob && (
+            <div className="pointer-events-none absolute inset-x-3 bottom-3 z-[500] md:hidden">
+              <div className="pointer-events-auto overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-900/10">
+                <button
+                  onClick={() => router.push(`/jobs/${selectedJob.id}`)}
+                  className="block w-full px-4 py-3 text-left"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900">
+                        {selectedJob.title}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {selectedJob.company} · {selectedJob.location.city}
+                      </p>
+                    </div>
+                    <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600">
+                      {selectedJob.contractType}
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

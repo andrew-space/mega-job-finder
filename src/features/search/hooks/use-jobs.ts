@@ -14,7 +14,7 @@ export interface JobsResponse {
   data: JobOffer[];
   meta: {
     total: number;
-    mode: "mock" | "live" | "mixed";
+    mode: "mock" | "live-db" | "live-fallback-mock";
     sourceCoverage: string[];
   };
 }
